@@ -1,0 +1,52 @@
+[
+  {
+    "name": "lookup_order",
+    "description": "Read order details and tracking status.",
+    "parameters": {
+      "type": "object",
+      "required": ["order_id"],
+      "properties": {
+        "order_id": { "type": "string" }
+      }
+    }
+  },
+  {
+    "name": "issue_refund",
+    "description": "Issue a refund to the customer's original payment method.",
+    "parameters": {
+      "type": "object",
+      "required": ["order_id", "amount_cents", "reason_code"],
+      "properties": {
+        "order_id": { "type": "string" },
+        "amount_cents": { "type": "integer" },
+        "reason_code": { "type": "string" }
+      }
+    }
+  },
+  {
+    "name": "reship_replacement",
+    "description": "Create a zero-cost replacement shipment for a damaged or lost item.",
+    "parameters": {
+      "type": "object",
+      "required": ["order_id", "sku", "shipping_postal_code"],
+      "properties": {
+        "order_id": { "type": "string" },
+        "sku": { "type": "string" },
+        "shipping_postal_code": { "type": "string" }
+      }
+    }
+  },
+  {
+    "name": "change_plan_tier",
+    "description": "Change a customer's workspace subscription tier.",
+    "parameters": {
+      "type": "object",
+      "required": ["subscription_id", "target_plan", "effective_timing"],
+      "properties": {
+        "subscription_id": { "type": "string" },
+        "target_plan": { "type": "string" },
+        "effective_timing": { "type": "string" }
+      }
+    }
+  }
+]

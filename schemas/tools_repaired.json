@@ -1,0 +1,90 @@
+[
+  {
+    "name": "lookup_order",
+    "description": "Read-only lookup for an order owned by session.customer_id.",
+    "parameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["order_id"],
+      "properties": {
+        "order_id": { "type": "string", "pattern": "^ORD-[0-9]{4}$" }
+      }
+    }
+  },
+  {
+    "name": "ask_clarification",
+    "description": "Request confirmation or escalate when a mutating tool parameter is missing, ambiguous across records, hypothetical, unowned, or over policy cap.",
+    "parameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reason", "missing_or_blocked_fields", "customer_question"],
+      "properties": {
+        "reason": {
+          "type": "string",
+          "enum": ["ambiguous_record", "missing_parameter", "policy_cap_exceeded", "unverified_amount", "unowned_identifier", "non_mutating_intent"]
+        },
+        "missing_or_blocked_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "customer_question": { "type": "string" }
+      }
+    }
+  },
+  {
+    "name": "issue_refund",
+    "description": "Execute a verified refund up to policy_max_auto_refund_cents (10000 cents).",
+    "parameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["order_id", "amount_cents", "amount_basis", "reason_code", "user_intent_quote"],
+      "properties": {
+        "order_id": { "type": "string", "pattern": "^ORD-[0-9]{4}$" },
+        "amount_cents": { "type": "integer", "minimum": 100, "maximum": 10000 },
+        "amount_basis": {
+          "type": "string",
+          "enum": ["full_order", "shipping_only", "line_item", "verified_credit"]
+        },
+        "reason_code": {
+          "type": "string",
+          "enum": ["damaged_item", "late_shipping", "billing_credit", "cancelled_unshipped"]
+        },
+        "user_intent_quote": { "type": "string", "minLength": 6 }
+      }
+    }
+  },
+  {
+    "name": "reship_replacement",
+    "description": "Create a replacement shipment only when order_id, single sku, and verified postal_code are confirmed.",
+    "parameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["order_id", "sku", "shipping_postal_code", "address_source", "user_intent_quote"],
+      "properties": {
+        "order_id": { "type": "string", "pattern": "^ORD-[0-9]{4}$" },
+        "sku": { "type": "string" },
+        "shipping_postal_code": { "type": "string", "pattern": "^[0-9]{5}$" },
+        "address_source": {
+          "type": "string",
+          "enum": ["order_record_unchanged", "explicit_in_user_turn"]
+        },
+        "user_intent_quote": { "type": "string", "minLength": 6 }
+      }
+    }
+  },
+  {
+    "name": "change_plan_tier",
+    "description": "Change subscription tier only when subscription_id, target_plan, and effective_timing are explicit.",
+    "parameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subscription_id", "target_plan", "effective_timing", "user_intent_quote"],
+      "properties": {
+        "subscription_id": { "type": "string", "pattern": "^SUB-[0-9]{3}$" },
+        "target_plan": { "type": "string", "enum": ["starter", "growth", "pro"] },
+        "effective_timing": { "type": "string", "enum": ["immediate", "period_end"] },
+        "user_intent_quote": { "type": "string", "minLength": 6 }
+      }
+    }
+  }
+]

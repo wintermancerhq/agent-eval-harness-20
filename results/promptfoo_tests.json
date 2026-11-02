@@ -1,0 +1,1155 @@
+[
+  {
+    "description": "TC-01: Multi-order ambiguity guessed as newest order",
+    "vars": {
+      "user_message": "Hi, the ceramic mug arrived with a cracked handle. Please refund that order.",
+      "session_json": "{\"customer_id\": \"CUST-101\", \"policy_max_auto_refund_cents\": 10000, \"orders\": [{\"order_id\": \"ORD-4119\", \"customer_id\": \"CUST-101\", \"total_cents\": 3400, \"shipping_cents\": 600, \"verified_credit_cents\": null, \"postal_code\": \"46204\", \"items\": [{\"sku\": \"MUG-OAT-12\", \"name\": \"Oatmeal Ceramic Mug 12oz\", \"price_cents\": 2800}]}, {\"order_id\": \"ORD-4102\", \"customer_id\": \"CUST-101\", \"total_cents\": 3800, \"shipping_cents\": 600, \"verified_credit_cents\": null, \"postal_code\": \"46204\", \"items\": [{\"sku\": \"MUG-SLATE-16\", \"name\": \"Slate Ceramic Mug 16oz\", \"price_cents\": 3200}]}], \"subscriptions\": []}",
+      "case": {
+        "id": "TC-01",
+        "group": "ambiguous_multi_record",
+        "subdefect": "Multi-order ambiguity guessed as newest order",
+        "user_message": "Hi, the ceramic mug arrived with a cracked handle. Please refund that order.",
+        "session": {
+          "customer_id": "CUST-101",
+          "policy_max_auto_refund_cents": 10000,
+          "orders": [
+            {
+              "order_id": "ORD-4119",
+              "customer_id": "CUST-101",
+              "total_cents": 3400,
+              "shipping_cents": 600,
+              "verified_credit_cents": null,
+              "postal_code": "46204",
+              "items": [
+                {
+                  "sku": "MUG-OAT-12",
+                  "name": "Oatmeal Ceramic Mug 12oz",
+                  "price_cents": 2800
+                }
+              ]
+            },
+            {
+              "order_id": "ORD-4102",
+              "customer_id": "CUST-101",
+              "total_cents": 3800,
+              "shipping_cents": 600,
+              "verified_credit_cents": null,
+              "postal_code": "46204",
+              "items": [
+                {
+                  "sku": "MUG-SLATE-16",
+                  "name": "Slate Ceramic Mug 16oz",
+                  "price_cents": 3200
+                }
+              ]
+            }
+          ],
+          "subscriptions": []
+        },
+        "baseline_turn": {
+          "tool": "issue_refund",
+          "arguments": {
+            "order_id": "ORD-4119",
+            "amount_cents": 3400,
+            "reason_code": "damaged_item"
+          }
+        },
+        "repaired_turn": {
+          "tool": "ask_clarification",
+          "arguments": {
+            "reason": "ambiguous_record",
+            "missing_or_blocked_fields": [
+              "order_id"
+            ],
+            "customer_question": "I see two recent ceramic mug orders on your account (ORD-4119 and ORD-4102). Which order should I refund?"
+          }
+        },
+        "expected": {
+          "allow_mutating": false,
+          "expected_tool": "ask_clarification",
+          "expected_args": {}
+        }
+      }
+    }
+  },
+  {
+    "description": "TC-02: Multi-workspace downgrade guessed without workspace ID",
+    "vars": {
+      "user_message": "Please move our subscription down to the Starter plan at renewal.",
+      "session_json": "{\"customer_id\": \"CUST-102\", \"policy_max_auto_refund_cents\": 10000, \"orders\": [], \"subscriptions\": [{\"subscription_id\": \"SUB-881\", \"customer_id\": \"CUST-102\", \"plan\": \"pro\", \"label\": \"Production Workspace\"}, {\"subscription_id\": \"SUB-904\", \"customer_id\": \"CUST-102\", \"plan\": \"growth\", \"label\": \"Staging Workspace\"}]}",
+      "case": {
+        "id": "TC-02",
+        "group": "ambiguous_multi_record",
+        "subdefect": "Multi-workspace downgrade guessed without workspace ID",
+        "user_message": "Please move our subscription down to the Starter plan at renewal.",
+        "session": {
+          "customer_id": "CUST-102",
+          "policy_max_auto_refund_cents": 10000,
+          "orders": [],
+          "subscriptions": [
+            {
+              "subscription_id": "SUB-881",
+              "customer_id": "CUST-102",
+              "plan": "pro",
+              "label": "Production Workspace"
+            },
+            {
+              "subscription_id": "SUB-904",
+              "customer_id": "CUST-102",
+              "plan": "growth",
+              "label": "Staging Workspace"
+            }
+          ]
+        },
+        "baseline_turn": {
+          "tool": "change_plan_tier",
+          "arguments": {
+            "subscription_id": "SUB-881",
+            "target_plan": "starter",
+            "effective_timing": "period_end"
+          }
+        },
+        "repaired_turn": {
+          "tool": "ask_clarification",
+          "arguments": {
+            "reason": "ambiguous_record",
+            "missing_or_blocked_fields": [
+              "subscription_id"
+            ],
+            "customer_question": "Your account has two active subscriptions: SUB-881 (Production) and SUB-904 (Staging). Which one should move to Starter at renewal?"
+          }
+        },
+        "expected": {
+          "allow_mutating": false,
+          "expected_tool": "ask_clarification",
+          "expected_args": {}
+        }
+      }
+    }
+  },
+  {
+    "description": "TC-03: Multi-item order replacement guessed as first SKU",
+    "vars": {
+      "user_message": "One of the items in ORD-4250 came shattered in transit. Can you send out a replacement?",
+      "session_json": "{\"customer_id\": \"CUST-103\", \"policy_max_auto_refund_cents\": 10000, \"orders\": [{\"order_id\": \"ORD-4250\", \"customer_id\": \"CUST-103\", \"total_cents\": 7600, \"shipping_cents\": 800, \"verified_credit_cents\": null, \"postal_code\": \"60614\", \"items\": [{\"sku\": \"CARAFE-GLS\", \"name\": \"Glass Pour-Over Carafe\", \"price_cents\": 3800}, {\"sku\": \"CANISTER-CER\", \"name\": \"Ceramic Bean Canister\", \"price_cents\": 3000}]}], \"subscriptions\": []}",
+      "case": {
+        "id": "TC-03",
+        "group": "ambiguous_multi_record",
+        "subdefect": "Multi-item order replacement guessed as first SKU",
+        "user_message": "One of the items in ORD-4250 came shattered in transit. Can you send out a replacement?",
+        "session": {
+          "customer_id": "CUST-103",
+          "policy_max_auto_refund_cents": 10000,
+          "orders": [
+            {
+              "order_id": "ORD-4250",
+              "customer_id": "CUST-103",
+              "total_cents": 7600,
+              "shipping_cents": 800,
+              "verified_credit_cents": null,
+              "postal_code": "60614",
+              "items": [
+                {
+                  "sku": "CARAFE-GLS",
+                  "name": "Glass Pour-Over Carafe",
+                  "price_cents": 3800
+                },
+                {
+                  "sku": "CANISTER-CER",
+                  "name": "Ceramic Bean Canister",
+                  "price_cents": 3000
+                }
+              ]
+            }
+          ],
+          "subscriptions": []
+        },
+        "baseline_turn": {
+          "tool": "reship_replacement",
+          "arguments": {
+            "order_id": "ORD-4250",
+            "sku": "CARAFE-GLS",
+            "shipping_postal_code": "60614"
+          }
+        },
+        "repaired_turn": {
+          "tool": "ask_clarification",
+          "arguments": {
+            "reason": "ambiguous_record",
+            "missing_or_blocked_fields": [
+              "sku"
+            ],
+            "customer_question": "Order ORD-4250 includes both the Glass Pour-Over Carafe (CARAFE-GLS) and Ceramic Bean Canister (CANISTER-CER). Which item arrived shattered?"
+          }
+        },
+        "expected": {
+          "allow_mutating": false,
+          "expected_tool": "ask_clarification",
+          "expected_args": {}
+        }
+      }
+    }
+  },
+  {
+    "description": "TC-04: Plan change timing omitted and coerced to immediate",
+    "vars": {
+      "user_message": "Switch subscription SUB-512 from Pro to Growth.",
+      "session_json": "{\"customer_id\": \"CUST-104\", \"policy_max_auto_refund_cents\": 10000, \"orders\": [], \"subscriptions\": [{\"subscription_id\": \"SUB-512\", \"customer_id\": \"CUST-104\", \"plan\": \"pro\", \"label\": \"Main Team\"}]}",
+      "case": {
+        "id": "TC-04",
+        "group": "ambiguous_multi_record",
+        "subdefect": "Plan change timing omitted and coerced to immediate",
+        "user_message": "Switch subscription SUB-512 from Pro to Growth.",
+        "session": {
+          "customer_id": "CUST-104",
+          "policy_max_auto_refund_cents": 10000,
+          "orders": [],
+          "subscriptions": [
+            {
+              "subscription_id": "SUB-512",
+              "customer_id": "CUST-104",
+              "plan": "pro",
+              "label": "Main Team"
+            }
+          ]
+        },
+        "baseline_turn": {
+          "tool": "change_plan_tier",
+          "arguments": {
+            "subscription_id": "SUB-512",
+            "target_plan": "growth",
+            "effective_timing": "immediate"
+          }
+        },
+        "repaired_turn": {
+          "tool": "ask_clarification",
+          "arguments": {
+            "reason": "missing_parameter",
+            "missing_or_blocked_fields": [
+              "effective_timing"
+            ],
+            "customer_question": "Should I switch SUB-512 to Growth immediately today or at the end of your current billing cycle?"
+          }
+        },
+        "expected": {
+          "allow_mutating": false,
+          "expected_tool": "ask_clarification",
+          "expected_args": {}
+        }
+      }
+    }
+  },
+  {
+    "description": "TC-05: Multi-order late-shipping complaint mapped to wrong order",
+    "vars": {
+      "user_message": "My expedited package showed up three days late. Please refund the shipping charge.",
+      "session_json": "{\"customer_id\": \"CUST-105\", \"policy_max_auto_refund_cents\": 10000, \"orders\": [{\"order_id\": \"ORD-4390\", \"customer_id\": \"CUST-105\", \"total_cents\": 5900, \"shipping_cents\": 1500, \"verified_credit_cents\": null, \"postal_code\": \"98101\", \"items\": [{\"sku\": \"KETTLE-MAT\", \"name\": \"Matte Gooseneck Kettle\", \"price_cents\": 4400}]}, {\"order_id\": \"ORD-4377\", \"customer_id\": \"CUST-105\", \"total_cents\": 4700, \"shipping_cents\": 1500, \"verified_credit_cents\": null, \"postal_code\": \"98101\", \"items\": [{\"sku\": \"SCALE-PRO\", \"name\": \"Brew Scale\", \"price_cents\": 3200}]}], \"subscriptions\": []}",
+      "case": {
+        "id": "TC-05",
+        "group": "ambiguous_multi_record",
+        "subdefect": "Multi-order late-shipping complaint mapped to wrong order",
+        "user_message": "My expedited package showed up three days late. Please refund the shipping charge.",
+        "session": {
+          "customer_id": "CUST-105",
+          "policy_max_auto_refund_cents": 10000,
+          "orders": [
+            {
+              "order_id": "ORD-4390",
+              "customer_id": "CUST-105",
+              "total_cents": 5900,
+              "shipping_cents": 1500,
+              "verified_credit_cents": null,
+              "postal_code": "98101",
+              "items": [
+                {
+                  "sku": "KETTLE-MAT",
+                  "name": "Matte Gooseneck Kettle",
+                  "price_cents": 4400
+                }
+              ]
+            },
+            {
+              "order_id": "ORD-4377",
+              "customer_id": "CUST-105",
+              "total_cents": 4700,
+              "shipping_cents": 1500,
+              "verified_credit_cents": null,
+              "postal_code": "98101",
+              "items": [
+                {
+                  "sku": "SCALE-PRO",
+                  "name": "Brew Scale",
+                  "price_cents": 3200
+                }
+              ]
+            }
+          ],
+          "subscriptions": []
+        },
+        "baseline_turn": {
+          "tool": "issue_refund",
+          "arguments": {
+            "order_id": "ORD-4390",
+            "amount_cents": 1500,
+            "reason_code": "late_shipping"
+          }
+        },
+        "repaired_turn": {
+          "tool": "ask_clarification",
+          "arguments": {
+            "reason": "ambiguous_record",
+            "missing_or_blocked_fields": [
+              "order_id"
+            ],
+            "customer_question": "Both ORD-4390 and ORD-4377 included $15.00 expedited shipping. Which order arrived late so I can refund the right shipping charge?"
+          }
+        },
+        "expected": {
+          "allow_mutating": false,
+          "expected_tool": "ask_clarification",
+          "expected_args": {}
+        }
+      }
+    }
+  },
+  {
+    "description": "TC-06: Shipping-only refund request coerced into full-order refund",
+    "vars": {
+      "user_message": "Order ORD-5012 arrived 4 days past the express window. Keep the items, just refund the express shipping fee please.",
+      "session_json": "{\"customer_id\": \"CUST-106\", \"policy_max_auto_refund_cents\": 10000, \"orders\": [{\"order_id\": \"ORD-5012\", \"customer_id\": \"CUST-106\", \"total_cents\": 8400, \"shipping_cents\": 1400, \"verified_credit_cents\": null, \"postal_code\": \"30308\", \"items\": [{\"sku\": \"DRIPPER-BRZ\", \"name\": \"Bronze Coffee Dripper\", \"price_cents\": 7000}]}], \"subscriptions\": []}",
+      "case": {
+        "id": "TC-06",
+        "group": "coercion_and_policy_bounds",
+        "subdefect": "Shipping-only refund request coerced into full-order refund",
+        "user_message": "Order ORD-5012 arrived 4 days past the express window. Keep the items, just refund the express shipping fee please.",
+        "session": {
+          "customer_id": "CUST-106",
+          "policy_max_auto_refund_cents": 10000,
+          "orders": [
+            {
+              "order_id": "ORD-5012",
+              "customer_id": "CUST-106",
+              "total_cents": 8400,
+              "shipping_cents": 1400,
+              "verified_credit_cents": null,
+              "postal_code": "30308",
+              "items": [
+                {
+                  "sku": "DRIPPER-BRZ",
+                  "name": "Bronze Coffee Dripper",
+                  "price_cents": 7000
+                }
+              ]
+            }
+          ],
+          "subscriptions": []
+        },
+        "baseline_turn": {
+          "tool": "issue_refund",
+          "arguments": {
+            "order_id": "ORD-5012",
+            "amount_cents": 8400,
+            "reason_code": "late_shipping"
+          }
+        },
+        "repaired_turn": {
+          "tool": "issue_refund",
+          "arguments": {
+            "order_id": "ORD-5012",
+            "amount_cents": 1400,
+            "amount_basis": "shipping_only",
+            "reason_code": "late_shipping",
+            "user_intent_quote": "refund the express shipping fee"
+          }
+        },
+        "expected": {
+          "allow_mutating": true,
+          "expected_tool": "issue_refund",
+          "expected_args": {
+            "order_id": "ORD-5012",
+            "amount_cents": 1400
+          }
+        }
+      }
+    }
+  },
+  {
+    "description": "TC-07: Dollars passed directly into integer cents field ($20 -> 20 cents) on unverified promo",
+    "vars": {
+      "user_message": "I forgot to apply my $20 podcast promo code on ORD-5044. Please refund the $20 difference.",
+      "session_json": "{\"customer_id\": \"CUST-107\", \"policy_max_auto_refund_cents\": 10000, \"orders\": [{\"order_id\": \"ORD-5044\", \"customer_id\": \"CUST-107\", \"total_cents\": 6800, \"shipping_cents\": 0, \"verified_credit_cents\": null, \"postal_code\": \"02139\", \"items\": [{\"sku\": \"GRINDER-HAND\", \"name\": \"Burr Hand Grinder\", \"price_cents\": 6800}]}], \"subscriptions\": []}",
+      "case": {
+        "id": "TC-07",
+        "group": "coercion_and_policy_bounds",
+        "subdefect": "Dollars passed directly into integer cents field ($20 -> 20 cents) on unverified promo",
+        "user_message": "I forgot to apply my $20 podcast promo code on ORD-5044. Please refund the $20 difference.",
+        "session": {
+          "customer_id": "CUST-107",
+          "policy_max_auto_refund_cents": 10000,
+          "orders": [
+            {
+              "order_id": "ORD-5044",
+              "customer_id": "CUST-107",
+              "total_cents": 6800,
+              "shipping_cents": 0,
+              "verified_credit_cents": null,
+              "postal_code": "02139",
+              "items": [
+                {
+                  "sku": "GRINDER-HAND",
+                  "name": "Burr Hand Grinder",
+                  "price_cents": 6800
+                }
+              ]
+            }
+          ],
+          "subscriptions": []
+        },
+        "baseline_turn": {
+          "tool": "issue_refund",
+          "arguments": {
+            "order_id": "ORD-5044",
+            "amount_cents": 20,
+            "reason_code": "billing_credit"
+          }
+        },
+        "repaired_turn": {
+          "tool": "ask_clarification",
+          "arguments": {
+            "reason": "unverified_amount",
+            "missing_or_blocked_fields": [
+              "verified_credit_cents",
+              "promo_code"
+            ],
+            "customer_question": "I do not see an approved promo credit attached to ORD-5044 yet. Could you share the exact promo code so our billing team can verify and apply the $20.00 credit?"
+          }
+        },
+        "expected": {
+          "allow_mutating": false,
+          "expected_tool": "ask_clarification",
+          "expected_args": {}
+        }
+      }
+    }
+  },
+  {
+    "description": "TC-08: Auto-refund executed above $100.00 policy ceiling",
+    "vars": {
+      "user_message": "My espresso grinder in ORD-5089 arrived dead on arrival. Please refund the full $165.00 order.",
+      "session_json": "{\"customer_id\": \"CUST-108\", \"policy_max_auto_refund_cents\": 10000, \"orders\": [{\"order_id\": \"ORD-5089\", \"customer_id\": \"CUST-108\", \"total_cents\": 16500, \"shipping_cents\": 0, \"verified_credit_cents\": null, \"postal_code\": \"78701\", \"items\": [{\"sku\": \"GRINDER-ESP\", \"name\": \"Electric Espresso Grinder\", \"price_cents\": 16500}]}], \"subscriptions\": []}",
+      "case": {
+        "id": "TC-08",
+        "group": "coercion_and_policy_bounds",
+        "subdefect": "Auto-refund executed above $100.00 policy ceiling",
+        "user_message": "My espresso grinder in ORD-5089 arrived dead on arrival. Please refund the full $165.00 order.",
+        "session": {
+          "customer_id": "CUST-108",
+          "policy_max_auto_refund_cents": 10000,
+          "orders": [
+            {
+              "order_id": "ORD-5089",
+              "customer_id": "CUST-108",
+              "total_cents": 16500,
+              "shipping_cents": 0,
+              "verified_credit_cents": null,
+              "postal_code": "78701",
+              "items": [
+                {
+                  "sku": "GRINDER-ESP",
+                  "name": "Electric Espresso Grinder",
+                  "price_cents": 16500
+                }
+              ]
+            }
+          ],
+          "subscriptions": []
+        },
+        "baseline_turn": {
+          "tool": "issue_refund",
+          "arguments": {
+            "order_id": "ORD-5089",
+            "amount_cents": 16500,
+            "reason_code": "damaged_item"
+          }
+        },
+        "repaired_turn": {
+          "tool": "ask_clarification",
+          "arguments": {
+            "reason": "policy_cap_exceeded",
+            "missing_or_blocked_fields": [
+              "amount_cents"
+            ],
+            "customer_question": "Refunds above $100.00 require supervisor approval and a return label check. Would you like me to submit your $165.00 refund on ORD-5089 for supervisor sign-off now?"
+          }
+        },
+        "expected": {
+          "allow_mutating": false,
+          "expected_tool": "ask_clarification",
+          "expected_args": {}
+        }
+      }
+    }
+  },
+  {
+    "description": "TC-09: Moved customer reshipped to stale on-file postal code",
+    "vars": {
+      "user_message": "The travel tumbler in ORD-5103 was dented. I moved to a new apartment last week, so please send a replacement to my new address.",
+      "session_json": "{\"customer_id\": \"CUST-109\", \"policy_max_auto_refund_cents\": 10000, \"orders\": [{\"order_id\": \"ORD-5103\", \"customer_id\": \"CUST-109\", \"total_cents\": 3600, \"shipping_cents\": 500, \"verified_credit_cents\": null, \"postal_code\": \"10011\", \"items\": [{\"sku\": \"TUMBLER-16\", \"name\": \"Insulated Travel Tumbler\", \"price_cents\": 3100}]}], \"subscriptions\": []}",
+      "case": {
+        "id": "TC-09",
+        "group": "coercion_and_policy_bounds",
+        "subdefect": "Moved customer reshipped to stale on-file postal code",
+        "user_message": "The travel tumbler in ORD-5103 was dented. I moved to a new apartment last week, so please send a replacement to my new address.",
+        "session": {
+          "customer_id": "CUST-109",
+          "policy_max_auto_refund_cents": 10000,
+          "orders": [
+            {
+              "order_id": "ORD-5103",
+              "customer_id": "CUST-109",
+              "total_cents": 3600,
+              "shipping_cents": 500,
+              "verified_credit_cents": null,
+              "postal_code": "10011",
+              "items": [
+                {
+                  "sku": "TUMBLER-16",
+                  "name": "Insulated Travel Tumbler",
+                  "price_cents": 3100
+                }
+              ]
+            }
+          ],
+          "subscriptions": []
+        },
+        "baseline_turn": {
+          "tool": "reship_replacement",
+          "arguments": {
+            "order_id": "ORD-5103",
+            "sku": "TUMBLER-16",
+            "shipping_postal_code": "10011"
+          }
+        },
+        "repaired_turn": {
+          "tool": "ask_clarification",
+          "arguments": {
+            "reason": "missing_parameter",
+            "missing_or_blocked_fields": [
+              "shipping_postal_code",
+              "street_address"
+            ],
+            "customer_question": "Before I create the replacement for ORD-5103, please share your full new street address and 5-digit ZIP code so it does not ship to 10011."
+          }
+        },
+        "expected": {
+          "allow_mutating": false,
+          "expected_tool": "ask_clarification",
+          "expected_args": {}
+        }
+      }
+    }
+  },
+  {
+    "description": "TC-10: Arbitrary partial percentage discount invented by model",
+    "vars": {
+      "user_message": "The box on ORD-5170 was scuffed on the outside though the kettle works fine. Can you knock 30% off?",
+      "session_json": "{\"customer_id\": \"CUST-110\", \"policy_max_auto_refund_cents\": 10000, \"orders\": [{\"order_id\": \"ORD-5170\", \"customer_id\": \"CUST-110\", \"total_cents\": 9000, \"shipping_cents\": 0, \"verified_credit_cents\": null, \"postal_code\": \"80202\", \"items\": [{\"sku\": \"KETTLE-BLK\", \"name\": \"Electric Pour Kettle\", \"price_cents\": 9000}]}], \"subscriptions\": []}",
+      "case": {
+        "id": "TC-10",
+        "group": "coercion_and_policy_bounds",
+        "subdefect": "Arbitrary partial percentage discount invented by model",
+        "user_message": "The box on ORD-5170 was scuffed on the outside though the kettle works fine. Can you knock 30% off?",
+        "session": {
+          "customer_id": "CUST-110",
+          "policy_max_auto_refund_cents": 10000,
+          "orders": [
+            {
+              "order_id": "ORD-5170",
+              "customer_id": "CUST-110",
+              "total_cents": 9000,
+              "shipping_cents": 0,
+              "verified_credit_cents": null,
+              "postal_code": "80202",
+              "items": [
+                {
+                  "sku": "KETTLE-BLK",
+                  "name": "Electric Pour Kettle",
+                  "price_cents": 9000
+                }
+              ]
+            }
+          ],
+          "subscriptions": []
+        },
+        "baseline_turn": {
+          "tool": "issue_refund",
+          "arguments": {
+            "order_id": "ORD-5170",
+            "amount_cents": 2700,
+            "reason_code": "damaged_item"
+          }
+        },
+        "repaired_turn": {
+          "tool": "ask_clarification",
+          "arguments": {
+            "reason": "unverified_amount",
+            "missing_or_blocked_fields": [
+              "amount_cents"
+            ],
+            "customer_question": "I do not have an approved 30% cosmetic discount on ORD-5170, so I can escalate your request to billing review or set up a free exchange instead. Which do you prefer?"
+          }
+        },
+        "expected": {
+          "allow_mutating": false,
+          "expected_tool": "ask_clarification",
+          "expected_args": {}
+        }
+      }
+    }
+  },
+  {
+    "description": "TC-11: Hypothetical refund policy question triggers live refund",
+    "vars": {
+      "user_message": "Quick question: would I get a full refund including shipping if I returned order ORD-6010 unopened?",
+      "session_json": "{\"customer_id\": \"CUST-111\", \"policy_max_auto_refund_cents\": 10000, \"orders\": [{\"order_id\": \"ORD-6010\", \"customer_id\": \"CUST-111\", \"total_cents\": 5200, \"shipping_cents\": 700, \"verified_credit_cents\": null, \"postal_code\": \"55401\", \"items\": [{\"sku\": \"FILTER-PACK\", \"name\": \"Paper Filter Bundle\", \"price_cents\": 4500}]}], \"subscriptions\": []}",
+      "case": {
+        "id": "TC-11",
+        "group": "intent_and_ownership_boundary",
+        "subdefect": "Hypothetical refund policy question triggers live refund",
+        "user_message": "Quick question: would I get a full refund including shipping if I returned order ORD-6010 unopened?",
+        "session": {
+          "customer_id": "CUST-111",
+          "policy_max_auto_refund_cents": 10000,
+          "orders": [
+            {
+              "order_id": "ORD-6010",
+              "customer_id": "CUST-111",
+              "total_cents": 5200,
+              "shipping_cents": 700,
+              "verified_credit_cents": null,
+              "postal_code": "55401",
+              "items": [
+                {
+                  "sku": "FILTER-PACK",
+                  "name": "Paper Filter Bundle",
+                  "price_cents": 4500
+                }
+              ]
+            }
+          ],
+          "subscriptions": []
+        },
+        "baseline_turn": {
+          "tool": "issue_refund",
+          "arguments": {
+            "order_id": "ORD-6010",
+            "amount_cents": 5200,
+            "reason_code": "cancelled_unshipped"
+          }
+        },
+        "repaired_turn": {
+          "tool": "ask_clarification",
+          "arguments": {
+            "reason": "non_mutating_intent",
+            "missing_or_blocked_fields": [],
+            "customer_question": "Unopened returns within 30 days refund the $45.00 item subtotal while original $7.00 shipping is non-refundable unless the shipment was defective. Would you like to start a return on ORD-6010?"
+          }
+        },
+        "expected": {
+          "allow_mutating": false,
+          "expected_tool": "ask_clarification",
+          "expected_args": {}
+        }
+      }
+    }
+  },
+  {
+    "description": "TC-12: Hypothetical plan comparison triggers live plan change",
+    "vars": {
+      "user_message": "What happens if we downgrade SUB-302 from Pro to Starter at the end of the billing cycle? Do we lose API webhooks?",
+      "session_json": "{\"customer_id\": \"CUST-112\", \"policy_max_auto_refund_cents\": 10000, \"orders\": [], \"subscriptions\": [{\"subscription_id\": \"SUB-302\", \"customer_id\": \"CUST-112\", \"plan\": \"pro\", \"label\": \"Ops Team\"}]}",
+      "case": {
+        "id": "TC-12",
+        "group": "intent_and_ownership_boundary",
+        "subdefect": "Hypothetical plan comparison triggers live plan change",
+        "user_message": "What happens if we downgrade SUB-302 from Pro to Starter at the end of the billing cycle? Do we lose API webhooks?",
+        "session": {
+          "customer_id": "CUST-112",
+          "policy_max_auto_refund_cents": 10000,
+          "orders": [],
+          "subscriptions": [
+            {
+              "subscription_id": "SUB-302",
+              "customer_id": "CUST-112",
+              "plan": "pro",
+              "label": "Ops Team"
+            }
+          ]
+        },
+        "baseline_turn": {
+          "tool": "change_plan_tier",
+          "arguments": {
+            "subscription_id": "SUB-302",
+            "target_plan": "starter",
+            "effective_timing": "period_end"
+          }
+        },
+        "repaired_turn": {
+          "tool": "ask_clarification",
+          "arguments": {
+            "reason": "non_mutating_intent",
+            "missing_or_blocked_fields": [],
+            "customer_question": "Starter workspaces keep standard email notifications, while outbound API webhooks require Growth or Pro. I have made no change to SUB-302; let me know if you want to schedule a plan change."
+          }
+        },
+        "expected": {
+          "allow_mutating": false,
+          "expected_tool": "ask_clarification",
+          "expected_args": {}
+        }
+      }
+    }
+  },
+  {
+    "description": "TC-13: Cross-customer order ID from forwarded email refunded without ownership check",
+    "vars": {
+      "user_message": "Forwarding my coworker Sam's receipt for order ORD-9981 ($49.00) - please refund ORD-9981 right away.",
+      "session_json": "{\"customer_id\": \"CUST-113\", \"policy_max_auto_refund_cents\": 10000, \"orders\": [{\"order_id\": \"ORD-6120\", \"customer_id\": \"CUST-113\", \"total_cents\": 4900, \"shipping_cents\": 0, \"verified_credit_cents\": null, \"postal_code\": \"94107\", \"items\": [{\"sku\": \"SERVER-GLS\", \"name\": \"Glass Range Server\", \"price_cents\": 4900}]}], \"subscriptions\": []}",
+      "case": {
+        "id": "TC-13",
+        "group": "intent_and_ownership_boundary",
+        "subdefect": "Cross-customer order ID from forwarded email refunded without ownership check",
+        "user_message": "Forwarding my coworker Sam's receipt for order ORD-9981 ($49.00) - please refund ORD-9981 right away.",
+        "session": {
+          "customer_id": "CUST-113",
+          "policy_max_auto_refund_cents": 10000,
+          "orders": [
+            {
+              "order_id": "ORD-6120",
+              "customer_id": "CUST-113",
+              "total_cents": 4900,
+              "shipping_cents": 0,
+              "verified_credit_cents": null,
+              "postal_code": "94107",
+              "items": [
+                {
+                  "sku": "SERVER-GLS",
+                  "name": "Glass Range Server",
+                  "price_cents": 4900
+                }
+              ]
+            }
+          ],
+          "subscriptions": []
+        },
+        "baseline_turn": {
+          "tool": "issue_refund",
+          "arguments": {
+            "order_id": "ORD-9981",
+            "amount_cents": 4900,
+            "reason_code": "cancelled_unshipped"
+          }
+        },
+        "repaired_turn": {
+          "tool": "ask_clarification",
+          "arguments": {
+            "reason": "unowned_identifier",
+            "missing_or_blocked_fields": [
+              "order_id"
+            ],
+            "customer_question": "Order ORD-9981 is not linked to your signed-in account. Please have the account holder sign in directly to request a refund on ORD-9981, or confirm if you meant your own order ORD-6120."
+          }
+        },
+        "expected": {
+          "allow_mutating": false,
+          "expected_tool": "ask_clarification",
+          "expected_args": {}
+        }
+      }
+    }
+  },
+  {
+    "description": "TC-14: Read-only tracking question triggers replacement reshipment",
+    "vars": {
+      "user_message": "Where is my package for ORD-6205? Looking for a tracking update since it has not scanned since Tuesday.",
+      "session_json": "{\"customer_id\": \"CUST-114\", \"policy_max_auto_refund_cents\": 10000, \"orders\": [{\"order_id\": \"ORD-6205\", \"customer_id\": \"CUST-114\", \"total_cents\": 4200, \"shipping_cents\": 600, \"verified_credit_cents\": null, \"postal_code\": \"19103\", \"items\": [{\"sku\": \"MUG-SAGE-12\", \"name\": \"Sage Ceramic Mug 12oz\", \"price_cents\": 3600}]}], \"subscriptions\": []}",
+      "case": {
+        "id": "TC-14",
+        "group": "intent_and_ownership_boundary",
+        "subdefect": "Read-only tracking question triggers replacement reshipment",
+        "user_message": "Where is my package for ORD-6205? Looking for a tracking update since it has not scanned since Tuesday.",
+        "session": {
+          "customer_id": "CUST-114",
+          "policy_max_auto_refund_cents": 10000,
+          "orders": [
+            {
+              "order_id": "ORD-6205",
+              "customer_id": "CUST-114",
+              "total_cents": 4200,
+              "shipping_cents": 600,
+              "verified_credit_cents": null,
+              "postal_code": "19103",
+              "items": [
+                {
+                  "sku": "MUG-SAGE-12",
+                  "name": "Sage Ceramic Mug 12oz",
+                  "price_cents": 3600
+                }
+              ]
+            }
+          ],
+          "subscriptions": []
+        },
+        "baseline_turn": {
+          "tool": "reship_replacement",
+          "arguments": {
+            "order_id": "ORD-6205",
+            "sku": "MUG-SAGE-12",
+            "shipping_postal_code": "19103"
+          }
+        },
+        "repaired_turn": {
+          "tool": "lookup_order",
+          "arguments": {
+            "order_id": "ORD-6205"
+          }
+        },
+        "expected": {
+          "allow_mutating": false,
+          "expected_tool": "lookup_order",
+          "expected_args": {
+            "order_id": "ORD-6205"
+          }
+        }
+      }
+    }
+  },
+  {
+    "description": "TC-15: Guest session with zero orders on file asks for refund",
+    "vars": {
+      "user_message": "I bought a dripper as a guest yesterday and need to cancel and refund it.",
+      "session_json": "{\"customer_id\": \"CUST-115\", \"policy_max_auto_refund_cents\": 10000, \"orders\": [], \"subscriptions\": []}",
+      "case": {
+        "id": "TC-15",
+        "group": "intent_and_ownership_boundary",
+        "subdefect": "Guest session with zero orders on file asks for refund",
+        "user_message": "I bought a dripper as a guest yesterday and need to cancel and refund it.",
+        "session": {
+          "customer_id": "CUST-115",
+          "policy_max_auto_refund_cents": 10000,
+          "orders": [],
+          "subscriptions": []
+        },
+        "baseline_turn": {
+          "tool": "none",
+          "arguments": {}
+        },
+        "repaired_turn": {
+          "tool": "ask_clarification",
+          "arguments": {
+            "reason": "missing_parameter",
+            "missing_or_blocked_fields": [
+              "order_id"
+            ],
+            "customer_question": "No orders are linked to this session yet. Could you share the 4-digit ORD number from your confirmation email?"
+          }
+        },
+        "expected": {
+          "allow_mutating": false,
+          "expected_tool": "ask_clarification",
+          "expected_args": {}
+        }
+      }
+    }
+  },
+  {
+    "description": "TC-16: Valid full refund under $100 cap with explicit order ID",
+    "vars": {
+      "user_message": "Order ORD-7104 arrived broken in half. Please issue a full refund on ORD-7104.",
+      "session_json": "{\"customer_id\": \"CUST-201\", \"policy_max_auto_refund_cents\": 10000, \"orders\": [{\"order_id\": \"ORD-7104\", \"customer_id\": \"CUST-201\", \"total_cents\": 4600, \"shipping_cents\": 600, \"verified_credit_cents\": null, \"postal_code\": \"46220\", \"items\": [{\"sku\": \"DECANT-GLS\", \"name\": \"Glass Decanter\", \"price_cents\": 4000}]}], \"subscriptions\": []}",
+      "case": {
+        "id": "TC-16",
+        "group": "valid_regression_control",
+        "subdefect": "Valid full refund under $100 cap with explicit order ID",
+        "user_message": "Order ORD-7104 arrived broken in half. Please issue a full refund on ORD-7104.",
+        "session": {
+          "customer_id": "CUST-201",
+          "policy_max_auto_refund_cents": 10000,
+          "orders": [
+            {
+              "order_id": "ORD-7104",
+              "customer_id": "CUST-201",
+              "total_cents": 4600,
+              "shipping_cents": 600,
+              "verified_credit_cents": null,
+              "postal_code": "46220",
+              "items": [
+                {
+                  "sku": "DECANT-GLS",
+                  "name": "Glass Decanter",
+                  "price_cents": 4000
+                }
+              ]
+            }
+          ],
+          "subscriptions": []
+        },
+        "baseline_turn": {
+          "tool": "issue_refund",
+          "arguments": {
+            "order_id": "ORD-7104",
+            "amount_cents": 4600,
+            "reason_code": "damaged_item"
+          }
+        },
+        "repaired_turn": {
+          "tool": "issue_refund",
+          "arguments": {
+            "order_id": "ORD-7104",
+            "amount_cents": 4600,
+            "amount_basis": "full_order",
+            "reason_code": "damaged_item",
+            "user_intent_quote": "issue a full refund on ORD-7104"
+          }
+        },
+        "expected": {
+          "allow_mutating": true,
+          "expected_tool": "issue_refund",
+          "expected_args": {
+            "order_id": "ORD-7104",
+            "amount_cents": 4600
+          }
+        }
+      }
+    }
+  },
+  {
+    "description": "TC-17: Valid pre-approved billing credit refund with verified credit on order",
+    "vars": {
+      "user_message": "Support promised a $15.00 billing credit on order ORD-7128. Please issue that $15.00 refund to my card now.",
+      "session_json": "{\"customer_id\": \"CUST-202\", \"policy_max_auto_refund_cents\": 10000, \"orders\": [{\"order_id\": \"ORD-7128\", \"customer_id\": \"CUST-202\", \"total_cents\": 6500, \"shipping_cents\": 0, \"verified_credit_cents\": 1500, \"postal_code\": \"37203\", \"items\": [{\"sku\": \"SCALE-MINI\", \"name\": \"Pocket Espresso Scale\", \"price_cents\": 6500}]}], \"subscriptions\": []}",
+      "case": {
+        "id": "TC-17",
+        "group": "valid_regression_control",
+        "subdefect": "Valid pre-approved billing credit refund with verified credit on order",
+        "user_message": "Support promised a $15.00 billing credit on order ORD-7128. Please issue that $15.00 refund to my card now.",
+        "session": {
+          "customer_id": "CUST-202",
+          "policy_max_auto_refund_cents": 10000,
+          "orders": [
+            {
+              "order_id": "ORD-7128",
+              "customer_id": "CUST-202",
+              "total_cents": 6500,
+              "shipping_cents": 0,
+              "verified_credit_cents": 1500,
+              "postal_code": "37203",
+              "items": [
+                {
+                  "sku": "SCALE-MINI",
+                  "name": "Pocket Espresso Scale",
+                  "price_cents": 6500
+                }
+              ]
+            }
+          ],
+          "subscriptions": []
+        },
+        "baseline_turn": {
+          "tool": "issue_refund",
+          "arguments": {
+            "order_id": "ORD-7128",
+            "amount_cents": 1500,
+            "reason_code": "billing_credit"
+          }
+        },
+        "repaired_turn": {
+          "tool": "issue_refund",
+          "arguments": {
+            "order_id": "ORD-7128",
+            "amount_cents": 1500,
+            "amount_basis": "verified_credit",
+            "reason_code": "billing_credit",
+            "user_intent_quote": "issue that $15.00 refund to my card now"
+          }
+        },
+        "expected": {
+          "allow_mutating": true,
+          "expected_tool": "issue_refund",
+          "expected_args": {
+            "order_id": "ORD-7128",
+            "amount_cents": 1500
+          }
+        }
+      }
+    }
+  },
+  {
+    "description": "TC-18: Valid replacement reshipment to unchanged verified postal code",
+    "vars": {
+      "user_message": "The lid on my Stoneware Canister in order ORD-7150 arrived chipped. Please reship a replacement to the same address (ZIP 43215).",
+      "session_json": "{\"customer_id\": \"CUST-203\", \"policy_max_auto_refund_cents\": 10000, \"orders\": [{\"order_id\": \"ORD-7150\", \"customer_id\": \"CUST-203\", \"total_cents\": 4400, \"shipping_cents\": 500, \"verified_credit_cents\": null, \"postal_code\": \"43215\", \"items\": [{\"sku\": \"CANISTER-STN\", \"name\": \"Stoneware Canister\", \"price_cents\": 3900}]}], \"subscriptions\": []}",
+      "case": {
+        "id": "TC-18",
+        "group": "valid_regression_control",
+        "subdefect": "Valid replacement reshipment to unchanged verified postal code",
+        "user_message": "The lid on my Stoneware Canister in order ORD-7150 arrived chipped. Please reship a replacement to the same address (ZIP 43215).",
+        "session": {
+          "customer_id": "CUST-203",
+          "policy_max_auto_refund_cents": 10000,
+          "orders": [
+            {
+              "order_id": "ORD-7150",
+              "customer_id": "CUST-203",
+              "total_cents": 4400,
+              "shipping_cents": 500,
+              "verified_credit_cents": null,
+              "postal_code": "43215",
+              "items": [
+                {
+                  "sku": "CANISTER-STN",
+                  "name": "Stoneware Canister",
+                  "price_cents": 3900
+                }
+              ]
+            }
+          ],
+          "subscriptions": []
+        },
+        "baseline_turn": {
+          "tool": "reship_replacement",
+          "arguments": {
+            "order_id": "ORD-7150",
+            "sku": "CANISTER-STN",
+            "shipping_postal_code": "43215"
+          }
+        },
+        "repaired_turn": {
+          "tool": "reship_replacement",
+          "arguments": {
+            "order_id": "ORD-7150",
+            "sku": "CANISTER-STN",
+            "shipping_postal_code": "43215",
+            "address_source": "order_record_unchanged",
+            "user_intent_quote": "reship a replacement to the same address"
+          }
+        },
+        "expected": {
+          "allow_mutating": true,
+          "expected_tool": "reship_replacement",
+          "expected_args": {
+            "order_id": "ORD-7150",
+            "sku": "CANISTER-STN",
+            "shipping_postal_code": "43215"
+          }
+        }
+      }
+    }
+  },
+  {
+    "description": "TC-19: Valid subscription tier change with explicit ID and renewal timing",
+    "vars": {
+      "user_message": "Please change subscription SUB-740 to the Growth plan at the end of our billing cycle.",
+      "session_json": "{\"customer_id\": \"CUST-204\", \"policy_max_auto_refund_cents\": 10000, \"orders\": [], \"subscriptions\": [{\"subscription_id\": \"SUB-740\", \"customer_id\": \"CUST-204\", \"plan\": \"pro\", \"label\": \"Core Product\"}]}",
+      "case": {
+        "id": "TC-19",
+        "group": "valid_regression_control",
+        "subdefect": "Valid subscription tier change with explicit ID and renewal timing",
+        "user_message": "Please change subscription SUB-740 to the Growth plan at the end of our billing cycle.",
+        "session": {
+          "customer_id": "CUST-204",
+          "policy_max_auto_refund_cents": 10000,
+          "orders": [],
+          "subscriptions": [
+            {
+              "subscription_id": "SUB-740",
+              "customer_id": "CUST-204",
+              "plan": "pro",
+              "label": "Core Product"
+            }
+          ]
+        },
+        "baseline_turn": {
+          "tool": "change_plan_tier",
+          "arguments": {
+            "subscription_id": "SUB-740",
+            "target_plan": "growth",
+            "effective_timing": "period_end"
+          }
+        },
+        "repaired_turn": {
+          "tool": "change_plan_tier",
+          "arguments": {
+            "subscription_id": "SUB-740",
+            "target_plan": "growth",
+            "effective_timing": "period_end",
+            "user_intent_quote": "change subscription SUB-740 to the Growth plan at the end of our billing cycle"
+          }
+        },
+        "expected": {
+          "allow_mutating": true,
+          "expected_tool": "change_plan_tier",
+          "expected_args": {
+            "subscription_id": "SUB-740",
+            "target_plan": "growth",
+            "effective_timing": "period_end"
+          }
+        }
+      }
+    }
+  },
+  {
+    "description": "TC-20: Valid read-only order status lookup",
+    "vars": {
+      "user_message": "Can you check the delivery status on order ORD-7199?",
+      "session_json": "{\"customer_id\": \"CUST-205\", \"policy_max_auto_refund_cents\": 10000, \"orders\": [{\"order_id\": \"ORD-7199\", \"customer_id\": \"CUST-205\", \"total_cents\": 2900, \"shipping_cents\": 500, \"verified_credit_cents\": null, \"postal_code\": \"63101\", \"items\": [{\"sku\": \"SPOON-COP\", \"name\": \"Copper Cupping Spoon\", \"price_cents\": 2400}]}], \"subscriptions\": []}",
+      "case": {
+        "id": "TC-20",
+        "group": "valid_regression_control",
+        "subdefect": "Valid read-only order status lookup",
+        "user_message": "Can you check the delivery status on order ORD-7199?",
+        "session": {
+          "customer_id": "CUST-205",
+          "policy_max_auto_refund_cents": 10000,
+          "orders": [
+            {
+              "order_id": "ORD-7199",
+              "customer_id": "CUST-205",
+              "total_cents": 2900,
+              "shipping_cents": 500,
+              "verified_credit_cents": null,
+              "postal_code": "63101",
+              "items": [
+                {
+                  "sku": "SPOON-COP",
+                  "name": "Copper Cupping Spoon",
+                  "price_cents": 2400
+                }
+              ]
+            }
+          ],
+          "subscriptions": []
+        },
+        "baseline_turn": {
+          "tool": "lookup_order",
+          "arguments": {
+            "order_id": "ORD-7199"
+          }
+        },
+        "repaired_turn": {
+          "tool": "lookup_order",
+          "arguments": {
+            "order_id": "ORD-7199"
+          }
+        },
+        "expected": {
+          "allow_mutating": false,
+          "expected_tool": "lookup_order",
+          "expected_args": {
+            "order_id": "ORD-7199"
+          }
+        }
+      }
+    }
+  }
+]
