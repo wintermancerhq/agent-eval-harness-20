@@ -2,6 +2,8 @@
 
 A reproducible, offline example of testing one failure class in a fictional customer-support workflow. The included synthetic cases cover ambiguous records, policy limits, record ownership, hypothetical requests and valid controls.
 
+This repository is part of Jordan Masopust's independent project work at Snowfield LLC, hosted under Snowfield's wintermancerhq GitHub organization. It was prepared with artificial intelligence assistance.
+
 ## Run the example
 
 ```sh
